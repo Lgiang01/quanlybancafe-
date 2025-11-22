@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard - Coffee Shop{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white border-b sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <i class="fas fa-coffee text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-900">Staff Portal</h1>
+                    <p class="text-sm text-gray-600">Welcome, {{ user.name }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="badge badge-info">
+                    <i class="fas fa-briefcase mr-1"></i> Staff
+                </span>
+                <a href="/logout" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="grid grid-cols-4 border-b">
+                <button class="tab-button tab-active px-6 py-4 text-sm font-medium" data-tab="orders-tab" onclick="showTab('orders-tab')">
+                    <i class="fas fa-shopping-bag mr-2"></i>Orders
+                </button>
+                <button class="tab-button px-6 py-4 text-sm font-medium" data-tab="tables-tab" onclick="showTab('tables-tab')">
+                    <i class="fas fa-chair mr-2"></i>Tables
+                </button>
+                <button class="tab-button px-6 py-4 text-sm font-medium" data-tab="inventory-tab" onclick="showTab('inventory-tab')">
+                    <i class="fas fa-boxes mr-2"></i>Inventory Count
+                </button>
+                <button class="tab-button px-6 py-4 text-sm font-medium" data-tab="shift-tab" onclick="showTab('shift-tab')">
+                    <i class="fas fa-clock mr-2"></i>Shift Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Orders Tab -->
+        <div id="orders-tab" class="tab-content">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Order Management</h2>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 border rounded-lg hover:bg-gray-50" onclick="filterOrders('all')">All</button>
+                        <button class="px-4 py-2 border rounded-lg hover:bg-gray-50" onclick="filterOrders('pending')">Pending</button>
+                        <button class="px-4 py-2 border rounded-lg hover:bg-gray-50" onclick="filterOrders('in_preparation')">In Progress</button>
+                        <button class="px-4 py-2 border rounded-lg hover:bg-gray-50" onclick="filterOrders('completed')">Completed</button>
+                    </div>
+                </div>
+                <div id="ordersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Orders will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables Tab -->
+        <div id="tables-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Table Management</h2>
+                <div id="tablesList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <!-- Tables will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Count Tab -->
+        <div id="inventory-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Inventory Count</h2>
+                <div class="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
+                    <i class="fas fa-info-circle mr-2"></i>Update inventory counts at the end of your shift
+                </div>
+                <div id="inventoryList" class="space-y-3">
+                    <!-- Inventory items will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Shift Report Tab -->
+        <div id="shift-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Shift Report</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-purple-50 rounded-lg p-4">
+                                <p class="text-sm text-purple-900 mb-1">Orders Completed</p>
+                                <p id="shiftOrders" class="text-3xl font-bold text-purple-600">0</p>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <p class="text-sm text-green-900 mb-1">Revenue Generated</p>
+                                <p id="shiftRevenue" class="text-3xl font-bold text-green-600">$0.00</p>
+                            </div>
+                        </div>
+                        <form id="shiftReportForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Shift Notes</label>
+                                <textarea id="shiftNotes" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Any issues or observations during your shift?"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Equipment Status</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" checked class="rounded"> Coffee Machine Working
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" checked class="rounded"> Espresso Machine Working
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" checked class="rounded"> Grinder Working
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" checked class="rounded"> POS System Working
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium">
+                                Submit Shift Report
+                            </button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Today's Activity</h3>
+                        <div id="shiftActivity" class="space-y-3 max-h-96 overflow-y-auto">
+                            <!-- Activity log will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    let orders = [];
+    let tables = [];
+    let inventory = [];
+    let currentFilter = 'all';
+
+    // Load orders
+    async function loadOrders() {
+        try {
+            const response = await fetch('/api/orders');
+            const data = await response.json();
+            orders = data.orders;
+            renderOrders();
+            updateShiftStats();
+        } catch (error) {
+            console.error('Error loading orders:', error);
+        }
+    }
+
+    function renderOrders() {
+        const container = $('#ordersList');
+        const filtered = currentFilter === 'all' ? orders : orders.filter(o => o.status === currentFilter);
+        
+        container.html(filtered.map(order => {
+            const statusColors = {
+                'pending': 'badge-warning',
+                'in_preparation': 'badge-info',
+                'completed': 'badge-success'
+            };
+            
+            return `
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-bold text-gray-900">${order.id}</h3>
+                            <p class="text-sm text-gray-600">${order.customer}</p>
+                            <p class="text-xs text-gray-500">${order.time}</p>
+                        </div>
+                        <span class="badge ${statusColors[order.status]}">${order.status.replace('_', ' ')}</span>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-700">${order.items.join(', ')}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t">
+                        <span class="font-bold text-green-600">${formatCurrency(order.total)}</span>
+                        <div class="flex gap-2">
+                            ${order.status === 'pending' ? `
+                                <button onclick="updateOrderStatus('${order.id}', 'in_preparation')" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                    Start
+                                </button>
+                            ` : ''}
+                            ${order.status === 'in_preparation' ? `
+                                <button onclick="updateOrderStatus('${order.id}', 'completed')" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                                    Complete
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join(''));
+    }
+
+    function filterOrders(status) {
+        currentFilter = status;
+        renderOrders();
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+            order.status = newStatus;
+            renderOrders();
+            updateShiftStats();
+        }
+    }
+
+    // Load tables
+    async function loadTables() {
+        try {
+            const response = await fetch('/api/tables');
+            const data = await response.json();
+            tables = data.tables;
+            renderTables();
+        } catch (error) {
+            console.error('Error loading tables:', error);
+        }
+    }
+
+    function renderTables() {
+        const container = $('#tablesList');
+        
+        container.html(tables.map(table => {
+            const statusColors = {
+                'available': 'bg-green-100 border-green-500',
+                'occupied': 'bg-red-100 border-red-500',
+                'reserved': 'bg-yellow-100 border-yellow-500'
+            };
+            
+            const statusIcons = {
+                'available': 'check-circle',
+                'occupied': 'user-friends',
+                'reserved': 'calendar-check'
+            };
+            
+            return `
+                <div class="border-2 ${statusColors[table.status]} rounded-lg p-6 text-center cursor-pointer hover:shadow-lg transition-shadow" onclick="toggleTableStatus('${table.id}')">
+                    <i class="fas fa-${statusIcons[table.status]} text-3xl mb-2"></i>
+                    <h3 class="font-bold text-lg">Table ${table.number}</h3>
+                    <p class="text-sm text-gray-600">${table.capacity} seats</p>
+                    <p class="text-xs font-medium mt-2 capitalize">${table.status}</p>
+                </div>
+            `;
+        }).join(''));
+    }
+
+    function toggleTableStatus(tableId) {
+        const table = tables.find(t => t.id === tableId);
+        if (table) {
+            const statuses = ['available', 'occupied', 'reserved'];
+            const currentIndex = statuses.indexOf(table.status);
+            table.status = statuses[(currentIndex + 1) % statuses.length];
+            renderTables();
+        }
+    }
+
+    // Load inventory
+    async function loadInventory() {
+        try {
+            const response = await fetch('/api/inventory');
+            const data = await response.json();
+            inventory = data.items;
+            renderInventory();
+        } catch (error) {
+            console.error('Error loading inventory:', error);
+        }
+    }
+
+    function renderInventory() {
+        const container = $('#inventoryList');
+        
+        container.html(inventory.map(item => `
+            <div class="border rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900">${item.name}</h4>
+                        <p class="text-sm text-gray-600">${item.supplier}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Current Stock</p>
+                            <p class="font-bold ${item.quantity < item.minStock ? 'text-red-600' : 'text-gray-900'}">${item.quantity} ${item.unit}</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="updateInventory('${item.id}', -1)" class="w-8 h-8 bg-gray-200 rounded hover:bg-gray-300">
+                                <i class="fas fa-minus text-xs"></i>
+                            </button>
+                            <button onclick="updateInventory('${item.id}', 1)" class="w-8 h-8 bg-gray-200 rounded hover:bg-gray-300">
+                                <i class="fas fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                ${item.quantity < item.minStock ? `
+                    <div class="mt-2 bg-red-50 text-red-700 text-xs px-3 py-2 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Low stock alert!
+                    </div>
+                ` : ''}
+            </div>
+        `).join(''));
+    }
+
+    function updateInventory(itemId, change) {
+        const item = inventory.find(i => i.id === itemId);
+        if (item) {
+            item.quantity = Math.max(0, item.quantity + change);
+            renderInventory();
+        }
+    }
+
+    // Shift stats
+    function updateShiftStats() {
+        const completedOrders = orders.filter(o => o.status === 'completed').length;
+        const revenue = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.total, 0);
+        
+        $('#shiftOrders').text(completedOrders);
+        $('#shiftRevenue').text(formatCurrency(revenue));
+        
+        // Update activity log
+        const activityLog = orders.map(order => `
+            <div class="border-l-4 ${order.status === 'completed' ? 'border-green-500' : 'border-blue-500'} pl-4 pb-3">
+                <p class="font-medium text-sm">${order.id} - ${order.customer}</p>
+                <p class="text-xs text-gray-600">${order.time} • ${order.status.replace('_', ' ')}</p>
+                <p class="text-xs text-gray-500">${order.items.join(', ')}</p>
+            </div>
+        `).join('');
+        
+        $('#shiftActivity').html(activityLog || '<p class="text-center text-gray-500">No activity yet</p>');
+    }
+
+    // Shift report form
+    $('#shiftReportForm').on('submit', function(e) {
+        e.preventDefault();
+        alert('Shift report submitted successfully!');
+        this.reset();
+    });
+
+    // Initialize
+    $(document).ready(function() {
+        loadOrders();
+        loadTables();
+        loadInventory();
+    });
+</script>
+{% endblock %}
